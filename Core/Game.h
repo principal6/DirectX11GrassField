@@ -258,6 +258,7 @@ private:
 	void CreateBoundingSphere();
 	void CreatePickedTriangle();
 	void Create3DGizmos();
+	void CreateSamplerStates();
 
 // Advanced settings
 public:
@@ -398,6 +399,7 @@ public:
 	float GetSkyTime() const;
 	XMMATRIX GetTransposedVPMatrix() const;
 	ID3D11DepthStencilState* GetDepthStencilStateLessEqualNoWrite() const { return m_DepthStencilStateLessEqualNoWrite.Get(); }
+	ID3D11SamplerState* GetSamplerLinearMirror() const { return m_SamplerLinearMirror.Get(); }
 	const char* GetWorkingDirectory() const { return m_WorkingDirectory; }
 
 private:
@@ -629,6 +631,7 @@ private:
 	ComPtr<ID3D11Texture2D>			m_DepthStencilBuffer{};
 	ComPtr<ID3D11DepthStencilState>	m_DepthStencilStateLessEqualNoWrite{};
 	ComPtr<ID3D11DepthStencilState>	m_DepthStencilStateAlways{};
+	ComPtr<ID3D11SamplerState>		m_SamplerLinearMirror{};
 
 	unique_ptr<Keyboard>			m_Keyboard{};
 	unique_ptr<Mouse>				m_Mouse{};

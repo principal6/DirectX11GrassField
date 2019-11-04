@@ -77,6 +77,9 @@ void CGrassField::Draw()
 	m_PtrDeviceContext->RSGetState(RSState.GetAddressOf());
 	m_PtrDeviceContext->RSSetState(m_PtrGame->GetCommonStates()->CullNone());
 
+	ID3D11SamplerState* SamplerState{ m_PtrGame->GetSamplerLinearMirror() };
+	m_PtrDeviceContext->PSSetSamplers(0, 1, &SamplerState);
+	
 	m_PtrDeviceContext->IASetVertexBuffers(0, 1, m_VertexBufferSet.Buffer.GetAddressOf(), &m_VertexBufferSet.Stride, &m_VertexBufferSet.Offset);
 	m_PtrDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 	m_PtrDeviceContext->Draw(static_cast<UINT>(m_vVertices.size()), 0);

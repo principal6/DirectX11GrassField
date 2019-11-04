@@ -817,6 +817,8 @@ void CGame::InitializeDirectX(const wstring& FontFileName, bool bWindowed)
 
 	Create3DGizmos();
 
+	CreateSamplerStates();
+
 	m_MatrixProjection2D = XMMatrixOrthographicLH(m_WindowSize.x, m_WindowSize.y, 0.0f, 1.0f);
 	m_SpriteBatch = make_unique<SpriteBatch>(m_DeviceContext.Get());
 	m_SpriteFont = make_unique<SpriteFont>(m_Device.Get(), FontFileName.c_str());
@@ -1261,6 +1263,24 @@ void CGame::Create3DGizmos()
 		m_Object3D_3DGizmoScalingZ->ComponentRender.PtrVS = m_VSGizmo.get();
 		m_Object3D_3DGizmoScalingZ->ComponentRender.PtrPS = m_PSGizmo.get();
 	}
+}
+
+void CGame::CreateSamplerStates()
+{
+	D3D11_SAMPLER_DESC SamplerDesc{};
+	SamplerDesc.AddressU = SamplerDesc.AddressV = SamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_MIRROR;
+	SamplerDesc.BorderColor[0] = 1.0f;
+	SamplerDesc.BorderColor[1] = 1.0f;
+	SamplerDesc.BorderColor[2] = 1.0f;
+	SamplerDesc.BorderColor[3] = 1.0f;
+	SamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	SamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	SamplerDesc.MaxAnisotropy = D3D11_MAX_MAXANISOTROPY;
+	SamplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	SamplerDesc.MinLOD = 0.0f;
+	SamplerDesc.MipLODBias = 0.0f;
+
+	m_Device->CreateSamplerState(&SamplerDesc, m_SamplerLinearMirror.ReleaseAndGetAddressOf());
 }
 
 CShader* CGame::AddShader()
