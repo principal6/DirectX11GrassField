@@ -15,11 +15,11 @@ cbuffer cbGrass : register(b1)
 
 static float4 GetBladeTrianglePosition(float4 BasePosition, float4 SideDisplacement, float YDisplacement, float T)
 {
-	float4 Result;
-	Result = BasePosition + SideDisplacement;
-	Result.y += YDisplacement * T;
-	Result = mul(Result, ViewProjection);
-	return Result;
+	float4 OutputElement;
+	OutputElement = BasePosition + SideDisplacement;
+	OutputElement.y += YDisplacement * T;
+	OutputElement = mul(OutputElement, ViewProjection);
+	return OutputElement;
 }
 
 [maxvertexcount(KSegmentCount * 6 - 3)] // @important: the tip segment only has one triangle, not two.
@@ -42,13 +42,11 @@ void main(point VS_GRASS_FIELD_OUTPUT Input[1], inout TriangleStream<GS_GRASS_FI
 	const float4 KGroundColor = Input[0].GroundColor;
 	const float4 KTipColor = Input[0].TipColor;
 
-	GS_GRASS_FIELD_OUTPUT Result;
-	
+	GS_GRASS_FIELD_OUTPUT OutputElement;
 	for (int iSegment = 0; iSegment < KSegmentCount; ++iSegment)
 	{
 		float TLower = (float)(iSegment + 0) / (float)KSegmentCount;
 		float THigher = (float)(iSegment + 1) / (float)KSegmentCount;
-
 		float TLowerSquare = TLower * TLower;
 		float THigherSquare = THigher * THigher;
 
@@ -65,28 +63,28 @@ void main(point VS_GRASS_FIELD_OUTPUT Input[1], inout TriangleStream<GS_GRASS_FI
 			// Upper left
 			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth + KSideYOffset, KUp, THigherSquare) - KSideYOffset;
 			SideDisplacementLength = dot(SideDisplacement, KLeftDirection);
-			Result.Position = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
-			Result.Color = lerp(KGroundColor, KTipColor, THigher);
-			Result.UV = float2(0.5f - SideDisplacementLength / KBladeDoubleWidth, 1.0f - THigher);
-			Output.Append(Result);
+			OutputElement.Position = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, THigher);
+			OutputElement.UV = float2(0.5f - SideDisplacementLength / KBladeDoubleWidth, 1.0f - THigher);
+			Output.Append(OutputElement);
 
 
 			// Upper right
 			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth + KSideYOffset, KUp, THigherSquare) - KSideYOffset;
 			SideDisplacementLength = dot(SideDisplacement, KRightDirection);
-			Result.Position = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
-			Result.Color = lerp(KGroundColor, KTipColor, THigher);
-			Result.UV = float2(0.5f + SideDisplacementLength / KBladeDoubleWidth, 1.0f - THigher);
-			Output.Append(Result);
+			OutputElement.Position = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, THigher);
+			OutputElement.UV = float2(0.5f + SideDisplacementLength / KBladeDoubleWidth, 1.0f - THigher);
+			Output.Append(OutputElement);
 
 
 			// Lower left
 			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth + KSideYOffset, KUp, TLowerSquare) - KSideYOffset;
 			SideDisplacementLength = dot(SideDisplacement, KLeftDirection);
-			Result.Position = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
-			Result.Color = lerp(KGroundColor, KTipColor, TLower);
-			Result.UV = float2(0.5f - SideDisplacementLength / KBladeDoubleWidth, 1.0f - TLower);
-			Output.Append(Result);
+			OutputElement.Position = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, TLower);
+			OutputElement.UV = float2(0.5f - SideDisplacementLength / KBladeDoubleWidth, 1.0f - TLower);
+			Output.Append(OutputElement);
 			Output.RestartStrip();
 		}
 
@@ -96,28 +94,28 @@ void main(point VS_GRASS_FIELD_OUTPUT Input[1], inout TriangleStream<GS_GRASS_FI
 			// Upper right
 			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth + KSideYOffset, KUp, THigherSquare) - KSideYOffset;
 			SideDisplacementLength = dot(SideDisplacement, KRightDirection);
-			Result.Position = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
-			Result.Color = lerp(KGroundColor, KTipColor, THigher);
-			Result.UV = float2(0.5f + SideDisplacementLength / KBladeDoubleWidth, 1.0f - THigher);
-			Output.Append(Result);
+			OutputElement.Position = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, THigher);
+			OutputElement.UV = float2(0.5f + SideDisplacementLength / KBladeDoubleWidth, 1.0f - THigher);
+			Output.Append(OutputElement);
 
 
 			// Lower right
 			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth + KSideYOffset, KUp, TLowerSquare) - KSideYOffset;
 			SideDisplacementLength = dot(SideDisplacement, KRightDirection);
-			Result.Position = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
-			Result.Color = lerp(KGroundColor, KTipColor, TLower);
-			Result.UV = float2(0.5f + SideDisplacementLength / KBladeDoubleWidth, 1.0f - TLower);
-			Output.Append(Result);
+			OutputElement.Position = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, TLower);
+			OutputElement.UV = float2(0.5f + SideDisplacementLength / KBladeDoubleWidth, 1.0f - TLower);
+			Output.Append(OutputElement);
 
 
 			// Lower left
 			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth + KSideYOffset, KUp, TLowerSquare) - KSideYOffset;
 			SideDisplacementLength = dot(SideDisplacement, KLeftDirection);
-			Result.Position = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
-			Result.Color = lerp(KGroundColor, KTipColor, TLower);
-			Result.UV = float2(0.5f - SideDisplacementLength / KBladeDoubleWidth, 1.0f - TLower);
-			Output.Append(Result);
+			OutputElement.Position = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, TLower);
+			OutputElement.UV = float2(0.5f - SideDisplacementLength / KBladeDoubleWidth, 1.0f - TLower);
+			Output.Append(OutputElement);
 			Output.RestartStrip();
 		}
 	}
