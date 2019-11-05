@@ -13,6 +13,15 @@ cbuffer cbGrass : register(b1)
 	float3 Pads;
 }
 
+static float4 GetBladeTrianglePosition(float4 BasePosition, float4 SideDisplacement, float YDisplacement, float T)
+{
+	float4 Result;
+	Result = BasePosition + SideDisplacement;
+	Result.y += YDisplacement * T;
+	Result = mul(Result, ViewProjection);
+	return Result;
+}
+
 [maxvertexcount(KSegmentCount * 6 - 3)] // @important: the tip segment only has one triangle, not two.
 void main(point VS_GRASS_FIELD_OUTPUT Input[1], inout TriangleStream<GS_GRASS_FIELD_OUTPUT> Output)
 {
@@ -25,7 +34,7 @@ void main(point VS_GRASS_FIELD_OUTPUT Input[1], inout TriangleStream<GS_GRASS_FI
 	const float KYBottomToTip = KTipPosition.y - Input[0].GroundPosition.y;
 	const float4 KLeftDirection = float4(cross(normalize(KGroundToTipOnGround.xyz), float3(0, 1, 0)), 0);
 	const float4 KRightDirection = -KLeftDirection;
-	const float4 KLeftDirectionRightYDisplacement = float4(0, 0.5f, 0, 0);
+	const float4 KSideYOffset = float4(0, -0.5f, 0, 0);
 	
 	const float4 P0 = KGroundPosition - KGroundToTipOnGround;
 	const float4 P1 = KTipPosition - KGroundToTipOnGround;
@@ -54,49 +63,28 @@ void main(point VS_GRASS_FIELD_OUTPUT Input[1], inout TriangleStream<GS_GRASS_FI
 			// Left segment
 
 			// Upper left
-			Result.Position = SlerpHigher;
-
-			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth - KLeftDirectionRightYDisplacement, KUp, THigherSquare) + 
-				KLeftDirectionRightYDisplacement;
-			Result.Position += SideDisplacement;
-
-			Result.Position.y += KYBottomToTip * THigher;
-			Result.Position = mul(Result.Position, ViewProjection);
-
-			Result.Color = lerp(KGroundColor, KTipColor, THigher);
-
+			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth + KSideYOffset, KUp, THigherSquare) - KSideYOffset;
 			SideDisplacementLength = dot(SideDisplacement, KLeftDirection);
+			Result.Position = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
+			Result.Color = lerp(KGroundColor, KTipColor, THigher);
 			Result.UV = float2(0.5f - SideDisplacementLength / KBladeDoubleWidth, 1.0f - THigher);
 			Output.Append(Result);
 
 
 			// Upper right
-			Result.Position = SlerpHigher;
-
-			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth - KLeftDirectionRightYDisplacement, KUp, THigherSquare) +
-				KLeftDirectionRightYDisplacement;
-			Result.Position += SideDisplacement;
-			Result.Position.y += KYBottomToTip * THigher;
-			Result.Position = mul(Result.Position, ViewProjection);
-
-			Result.Color = lerp(KGroundColor, KTipColor, THigher);
-
+			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth + KSideYOffset, KUp, THigherSquare) - KSideYOffset;
 			SideDisplacementLength = dot(SideDisplacement, KRightDirection);
+			Result.Position = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
+			Result.Color = lerp(KGroundColor, KTipColor, THigher);
 			Result.UV = float2(0.5f + SideDisplacementLength / KBladeDoubleWidth, 1.0f - THigher);
 			Output.Append(Result);
 
 
 			// Lower left
-			Result.Position = SlerpLower;
-			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth - KLeftDirectionRightYDisplacement, KUp, TLowerSquare) + 
-				KLeftDirectionRightYDisplacement;
-			Result.Position += SideDisplacement;
-			Result.Position.y += KYBottomToTip * TLower;
-			Result.Position = mul(Result.Position, ViewProjection);
-
-			Result.Color = lerp(KGroundColor, KTipColor, TLower);
-
+			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth + KSideYOffset, KUp, TLowerSquare) - KSideYOffset;
 			SideDisplacementLength = dot(SideDisplacement, KLeftDirection);
+			Result.Position = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
+			Result.Color = lerp(KGroundColor, KTipColor, TLower);
 			Result.UV = float2(0.5f - SideDisplacementLength / KBladeDoubleWidth, 1.0f - TLower);
 			Output.Append(Result);
 			Output.RestartStrip();
@@ -106,49 +94,28 @@ void main(point VS_GRASS_FIELD_OUTPUT Input[1], inout TriangleStream<GS_GRASS_FI
 			// Right segment && tip segment
 
 			// Upper right
-			Result.Position = SlerpHigher;
-
-			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth - KLeftDirectionRightYDisplacement, KUp, THigherSquare) + 
-				KLeftDirectionRightYDisplacement;
-			Result.Position += SideDisplacement;
-			Result.Position.y += KYBottomToTip * THigher;
-			Result.Position = mul(Result.Position, ViewProjection);
-
-			Result.Color = lerp(KGroundColor, KTipColor, THigher);
-
+			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth + KSideYOffset, KUp, THigherSquare) - KSideYOffset;
 			SideDisplacementLength = dot(SideDisplacement, KRightDirection);
+			Result.Position = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
+			Result.Color = lerp(KGroundColor, KTipColor, THigher);
 			Result.UV = float2(0.5f + SideDisplacementLength / KBladeDoubleWidth, 1.0f - THigher);
 			Output.Append(Result);
 
 
 			// Lower right
-			Result.Position = SlerpLower;
-
-			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth - KLeftDirectionRightYDisplacement, KUp, TLowerSquare) + 
-				KLeftDirectionRightYDisplacement;
-			Result.Position += SideDisplacement;
-			Result.Position.y += KYBottomToTip * TLower;
-			Result.Position = mul(Result.Position, ViewProjection);
-
-			Result.Color = lerp(KGroundColor, KTipColor, TLower);
-
+			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth + KSideYOffset, KUp, TLowerSquare) - KSideYOffset;
 			SideDisplacementLength = dot(SideDisplacement, KRightDirection);
+			Result.Position = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
+			Result.Color = lerp(KGroundColor, KTipColor, TLower);
 			Result.UV = float2(0.5f + SideDisplacementLength / KBladeDoubleWidth, 1.0f - TLower);
 			Output.Append(Result);
 
 
 			// Lower left
-			Result.Position = SlerpLower;
-
-			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth - KLeftDirectionRightYDisplacement, KUp, TLowerSquare) + 
-				KLeftDirectionRightYDisplacement;
-			Result.Position += SideDisplacement;
-			Result.Position.y += KYBottomToTip * TLower;
-			Result.Position = mul(Result.Position, ViewProjection);
-
-			Result.Color = lerp(KGroundColor, KTipColor, TLower);
-
+			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth + KSideYOffset, KUp, TLowerSquare) - KSideYOffset;
 			SideDisplacementLength = dot(SideDisplacement, KLeftDirection);
+			Result.Position = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
+			Result.Color = lerp(KGroundColor, KTipColor, TLower);
 			Result.UV = float2(0.5f - SideDisplacementLength / KBladeDoubleWidth, 1.0f - TLower);
 			Output.Append(Result);
 			Output.RestartStrip();
