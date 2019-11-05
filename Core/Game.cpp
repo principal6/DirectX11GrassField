@@ -1069,6 +1069,7 @@ void CGame::CreateBaseShaders()
 	m_PSGrassField = make_unique<CShader>(m_Device.Get(), m_DeviceContext.Get());
 	m_PSGrassField->Create(EShaderType::PixelShader, L"Shader\\PSGrassField.hlsl", "main");
 	m_PSGrassField->AddConstantBuffer(&m_cbPSGrassFieldFlags, sizeof(CGrassField::SCBPSFlags));
+	m_PSGrassField->AddConstantBuffer(&m_cbPSLightsData, sizeof(SCBPSLightsData));
 
 	m_PSBase2D = make_unique<CShader>(m_Device.Get(), m_DeviceContext.Get());
 	m_PSBase2D->Create(EShaderType::PixelShader, L"Shader\\PSBase2D.hlsl", "main");

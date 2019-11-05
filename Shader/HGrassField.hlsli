@@ -18,7 +18,9 @@ struct VS_GRASS_FIELD_OUTPUT
 
 struct GS_GRASS_FIELD_OUTPUT
 {
-	float4	Position	: SV_POSITION;
-	float4	Color		: COLOR;
-	float2	UV			: TEXCOORD;
+	float4	Position		: SV_POSITION;
+	float4	Color			: COLOR;
+	float2	UV				: TEXCOORD;
+	float3	WorldPosition	: POSITION;
+	float3	WorldNormal		: NORMAL;
 };

@@ -18,11 +18,17 @@ static float4 GetBladeTrianglePosition(float4 BasePosition, float4 SideDisplacem
 	float4 OutputElement;
 	OutputElement = BasePosition + SideDisplacement;
 	OutputElement.y += YDisplacement * T;
-	OutputElement = mul(OutputElement, ViewProjection);
 	return OutputElement;
 }
 
-[maxvertexcount(KSegmentCount * 6 - 3)] // @important: the tip segment only has one triangle, not two.
+static float3 GetNormal(float4 V0, float4 V1, float4 V2)
+{
+	float4 Edge01 = normalize(V1 - V0);
+	float4 Edge02 = normalize(V2 - V0);
+	return normalize(cross(Edge01.xyz, Edge02.xyz));
+}
+
+[maxvertexcount(KSegmentCount * 6 * 2 - 3)] // @important: (-3) the tip segment only has one triangle, not two.
 void main(point VS_GRASS_FIELD_OUTPUT Input[1], inout TriangleStream<GS_GRASS_FIELD_OUTPUT> Output)
 {
 	const float KBladeHalfWidth = BladeWidth / 2.0f;
@@ -31,8 +37,9 @@ void main(point VS_GRASS_FIELD_OUTPUT Input[1], inout TriangleStream<GS_GRASS_FI
 	const float4 KGroundPosition = float4(Input[0].GroundPosition.xyz, 1);
 	const float4 KTipPosition = Input[0].TipPosition;
 	const float4 KGroundToTipOnGround = KTipPosition.xwzw - KGroundPosition.xwzw;
+	const float3 KGroundNormal = normalize(-KGroundToTipOnGround.xyz);
 	const float KYBottomToTip = KTipPosition.y - Input[0].GroundPosition.y;
-	const float4 KLeftDirection = float4(cross(normalize(KGroundToTipOnGround.xyz), float3(0, 1, 0)), 0);
+	const float4 KLeftDirection = normalize(float4(cross(normalize(KGroundToTipOnGround.xyz), float3(0, 1, 0)), 0));
 	const float4 KRightDirection = -KLeftDirection;
 	const float4 KSideYOffset = float4(0, -0.5f, 0, 0);
 	
@@ -54,68 +61,160 @@ void main(point VS_GRASS_FIELD_OUTPUT Input[1], inout TriangleStream<GS_GRASS_FI
 		float4 SlerpHigher = Slerp(P0, P1, THigher) + KGroundToTipOnGround;
 
 		float4 SideDisplacement;
-		float SideDisplacementLength;
+		float SideDisplacementLength0;
+		float SideDisplacementLength1;
+		float SideDisplacementLength2;
 
 		if (THigher < 1.0f)
 		{
-			// Left segment
+			// ### Left segment
 
-			// Upper left
+			// ## Front face
+			// # Upper left
 			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth + KSideYOffset, KUp, THigherSquare) - KSideYOffset;
-			SideDisplacementLength = dot(SideDisplacement, KLeftDirection);
-			OutputElement.Position = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
-			OutputElement.Color = lerp(KGroundColor, KTipColor, THigher);
-			OutputElement.UV = float2(0.5f - SideDisplacementLength / KBladeDoubleWidth, 1.0f - THigher);
-			Output.Append(OutputElement);
+			SideDisplacementLength0 = dot(SideDisplacement, KLeftDirection);
+			float4 V0 = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
 
-
-			// Upper right
+			// # Upper right
 			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth + KSideYOffset, KUp, THigherSquare) - KSideYOffset;
-			SideDisplacementLength = dot(SideDisplacement, KRightDirection);
-			OutputElement.Position = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
-			OutputElement.Color = lerp(KGroundColor, KTipColor, THigher);
-			OutputElement.UV = float2(0.5f + SideDisplacementLength / KBladeDoubleWidth, 1.0f - THigher);
-			Output.Append(OutputElement);
+			SideDisplacementLength1 = dot(SideDisplacement, KRightDirection);
+			float4 V1 = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
 
-
-			// Lower left
+			// # Lower left
 			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth + KSideYOffset, KUp, TLowerSquare) - KSideYOffset;
-			SideDisplacementLength = dot(SideDisplacement, KLeftDirection);
-			OutputElement.Position = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
-			OutputElement.Color = lerp(KGroundColor, KTipColor, TLower);
-			OutputElement.UV = float2(0.5f - SideDisplacementLength / KBladeDoubleWidth, 1.0f - TLower);
+			SideDisplacementLength2 = dot(SideDisplacement, KLeftDirection);
+			float4 V2 = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
+
+			float3 NLower = Slerp(float4(KGroundNormal, 0), KUp, TLower).xyz;
+			float3 NHigher = Slerp(float4(KGroundNormal, 0), KUp, THigher).xyz;
+
+			// # V0 Upper left
+			OutputElement.Position = mul(V0, ViewProjection);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, THigher);
+			OutputElement.UV = float2(0.5f - SideDisplacementLength0 / KBladeDoubleWidth, 1.0f - THigher);
+			OutputElement.WorldPosition = V0.xyz;
+			OutputElement.WorldNormal = NHigher;
 			Output.Append(OutputElement);
+
+			// # V1 Upper right
+			OutputElement.Position = mul(V1, ViewProjection);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, THigher);
+			OutputElement.UV = float2(0.5f + SideDisplacementLength1 / KBladeDoubleWidth, 1.0f - THigher);
+			OutputElement.WorldPosition = V1.xyz;
+			OutputElement.WorldNormal = NHigher;
+			Output.Append(OutputElement);
+
+			// # V2 Lower left
+			OutputElement.Position = mul(V2, ViewProjection);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, TLower);
+			OutputElement.UV = float2(0.5f - SideDisplacementLength2 / KBladeDoubleWidth, 1.0f - TLower);
+			OutputElement.WorldPosition = V2.xyz;
+			OutputElement.WorldNormal = NLower;
+			Output.Append(OutputElement);
+
+			Output.RestartStrip();
+
+			// ## Back face
+			// # V1 Upper right
+			OutputElement.Position = mul(V1, ViewProjection);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, THigher);
+			OutputElement.UV = float2(0.5f + SideDisplacementLength1 / KBladeDoubleWidth, 1.0f - THigher);
+			OutputElement.WorldPosition = V1.xyz;
+			OutputElement.WorldNormal = -NHigher;
+			Output.Append(OutputElement);
+
+			// # V0 Upper left
+			OutputElement.Position = mul(V0, ViewProjection);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, THigher);
+			OutputElement.UV = float2(0.5f - SideDisplacementLength0 / KBladeDoubleWidth, 1.0f - THigher);
+			OutputElement.WorldPosition = V0.xyz;
+			OutputElement.WorldNormal = -NHigher;
+			Output.Append(OutputElement);
+
+			// # V2 Lower left
+			OutputElement.Position = mul(V2, ViewProjection);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, TLower);
+			OutputElement.UV = float2(0.5f - SideDisplacementLength2 / KBladeDoubleWidth, 1.0f - TLower);
+			OutputElement.WorldPosition = V2.xyz;
+			OutputElement.WorldNormal = -NLower;
+			Output.Append(OutputElement);
+
 			Output.RestartStrip();
 		}
 
 		{
-			// Right segment && tip segment
+			// ### Right segment && tip segment
 
-			// Upper right
+			// ## Front face
+			// # Upper right
 			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth + KSideYOffset, KUp, THigherSquare) - KSideYOffset;
-			SideDisplacementLength = dot(SideDisplacement, KRightDirection);
-			OutputElement.Position = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
-			OutputElement.Color = lerp(KGroundColor, KTipColor, THigher);
-			OutputElement.UV = float2(0.5f + SideDisplacementLength / KBladeDoubleWidth, 1.0f - THigher);
-			Output.Append(OutputElement);
+			SideDisplacementLength0 = dot(SideDisplacement, KRightDirection);
+			float4 V0 = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
 
-
-			// Lower right
+			// # Lower right
 			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth + KSideYOffset, KUp, TLowerSquare) - KSideYOffset;
-			SideDisplacementLength = dot(SideDisplacement, KRightDirection);
-			OutputElement.Position = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
-			OutputElement.Color = lerp(KGroundColor, KTipColor, TLower);
-			OutputElement.UV = float2(0.5f + SideDisplacementLength / KBladeDoubleWidth, 1.0f - TLower);
-			Output.Append(OutputElement);
+			SideDisplacementLength1 = dot(SideDisplacement, KRightDirection);
+			float4 V1 = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
 
-
-			// Lower left
+			// # Lower left
 			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth + KSideYOffset, KUp, TLowerSquare) - KSideYOffset;
-			SideDisplacementLength = dot(SideDisplacement, KLeftDirection);
-			OutputElement.Position = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
-			OutputElement.Color = lerp(KGroundColor, KTipColor, TLower);
-			OutputElement.UV = float2(0.5f - SideDisplacementLength / KBladeDoubleWidth, 1.0f - TLower);
+			SideDisplacementLength2 = dot(SideDisplacement, KLeftDirection);
+			float4 V2 = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
+
+			float3 NLower = Slerp(float4(KGroundNormal, 0), KUp, TLower).xyz;
+			float3 NHigher = Slerp(float4(KGroundNormal, 0), KUp, THigher).xyz;
+
+			// # V0 Upper right
+			OutputElement.Position = mul(V0, ViewProjection);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, THigher);
+			OutputElement.UV = float2(0.5f + SideDisplacementLength0 / KBladeDoubleWidth, 1.0f - THigher);
+			OutputElement.WorldPosition = V0.xyz;
+			OutputElement.WorldNormal = NHigher;
 			Output.Append(OutputElement);
+
+			// # V1 Lower right
+			OutputElement.Position = mul(V1, ViewProjection);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, TLower);
+			OutputElement.UV = float2(0.5f + SideDisplacementLength1 / KBladeDoubleWidth, 1.0f - TLower);
+			OutputElement.WorldPosition = V1.xyz;
+			OutputElement.WorldNormal = NLower;
+			Output.Append(OutputElement);
+
+			// # V2 Lower left
+			OutputElement.Position = mul(V2, ViewProjection);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, TLower);
+			OutputElement.UV = float2(0.5f - SideDisplacementLength2 / KBladeDoubleWidth, 1.0f - TLower);
+			OutputElement.WorldPosition = V2.xyz;
+			OutputElement.WorldNormal = NLower;
+			Output.Append(OutputElement);
+
+			Output.RestartStrip();
+
+			// ## Back face
+			// # V0 Upper right
+			OutputElement.Position = mul(V0, ViewProjection);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, THigher);
+			OutputElement.UV = float2(0.5f + SideDisplacementLength0 / KBladeDoubleWidth, 1.0f - THigher);
+			OutputElement.WorldPosition = V0.xyz;
+			OutputElement.WorldNormal = -NHigher;
+			Output.Append(OutputElement);
+
+			// # V2 Lower left
+			OutputElement.Position = mul(V2, ViewProjection);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, TLower);
+			OutputElement.UV = float2(0.5f - SideDisplacementLength2 / KBladeDoubleWidth, 1.0f - TLower);
+			OutputElement.WorldPosition = V2.xyz;
+			OutputElement.WorldNormal = -NLower;
+			Output.Append(OutputElement);
+
+			// # V1 Lower right
+			OutputElement.Position = mul(V1, ViewProjection);
+			OutputElement.Color = lerp(KGroundColor, KTipColor, TLower);
+			OutputElement.UV = float2(0.5f + SideDisplacementLength1 / KBladeDoubleWidth, 1.0f - TLower);
+			OutputElement.WorldPosition = V1.xyz;
+			OutputElement.WorldNormal = -NLower;
+			Output.Append(OutputElement);
+
 			Output.RestartStrip();
 		}
 	}
