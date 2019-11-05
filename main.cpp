@@ -35,7 +35,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	}
 	
 	CGrassField GrassField{ Game.GetDevicePtr(), Game.GetDeviceContextPtr(), &Game };
-	GrassField.Create(18, 3.0f, 4.0f, 0.4f, XMConvertToRadians(45.0f), XM_PIDIV2, 0.3f, XMVectorSet(0.4f, 0.6f, 0, 1), XMVectorSet(0.0f, 0.5f, 0, 1),
+	GrassField.Create(18, 2.0f, 3.0f, 0.2f, XM_PIDIV2 * 0.75f, XM_PIDIV2, 0.3f, XMVectorSet(0.4f, 0.6f, 0, 1), XMVectorSet(0.0f, 0.5f, 0, 1),
 		"Asset\\grass_blade.jpg");
 
 	IMGUI_CHECKVERSION();

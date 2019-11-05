@@ -41,7 +41,7 @@ void main(point VS_GRASS_FIELD_OUTPUT Input[1], inout TriangleStream<GS_GRASS_FI
 	const float KYBottomToTip = KTipPosition.y - Input[0].GroundPosition.y;
 	const float4 KLeftDirection = normalize(float4(cross(normalize(KGroundToTipOnGround.xyz), float3(0, 1, 0)), 0));
 	const float4 KRightDirection = -KLeftDirection;
-	const float4 KSideYOffset = float4(0, -0.5f, 0, 0);
+	const float4 KSideYOffset = float4(0, -BladeWidth, 0, 0);
 	
 	const float4 P0 = KGroundPosition - KGroundToTipOnGround;
 	const float4 P1 = KTipPosition - KGroundToTipOnGround;
@@ -73,17 +73,17 @@ void main(point VS_GRASS_FIELD_OUTPUT Input[1], inout TriangleStream<GS_GRASS_FI
 			// # Upper left
 			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth + KSideYOffset, KUp, THigherSquare) - KSideYOffset;
 			SideDisplacementLength0 = dot(SideDisplacement, KLeftDirection);
-			float4 V0 = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
+			float4 V0 = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigherSquare);
 
 			// # Upper right
 			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth + KSideYOffset, KUp, THigherSquare) - KSideYOffset;
 			SideDisplacementLength1 = dot(SideDisplacement, KRightDirection);
-			float4 V1 = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
+			float4 V1 = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigherSquare);
 
 			// # Lower left
 			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth + KSideYOffset, KUp, TLowerSquare) - KSideYOffset;
 			SideDisplacementLength2 = dot(SideDisplacement, KLeftDirection);
-			float4 V2 = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
+			float4 V2 = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLowerSquare);
 
 			float3 NLower = Slerp(float4(KGroundNormal, 0), KUp, TLower).xyz;
 			float3 NHigher = Slerp(float4(KGroundNormal, 0), KUp, THigher).xyz;
@@ -149,17 +149,17 @@ void main(point VS_GRASS_FIELD_OUTPUT Input[1], inout TriangleStream<GS_GRASS_FI
 			// # Upper right
 			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth + KSideYOffset, KUp, THigherSquare) - KSideYOffset;
 			SideDisplacementLength0 = dot(SideDisplacement, KRightDirection);
-			float4 V0 = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigher);
+			float4 V0 = GetBladeTrianglePosition(SlerpHigher, SideDisplacement, KYBottomToTip, THigherSquare);
 
 			// # Lower right
 			SideDisplacement = Slerp(KRightDirection * KBladeHalfWidth + KSideYOffset, KUp, TLowerSquare) - KSideYOffset;
 			SideDisplacementLength1 = dot(SideDisplacement, KRightDirection);
-			float4 V1 = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
+			float4 V1 = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLowerSquare);
 
 			// # Lower left
 			SideDisplacement = Slerp(KLeftDirection * KBladeHalfWidth + KSideYOffset, KUp, TLowerSquare) - KSideYOffset;
 			SideDisplacementLength2 = dot(SideDisplacement, KLeftDirection);
-			float4 V2 = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLower);
+			float4 V2 = GetBladeTrianglePosition(SlerpLower, SideDisplacement, KYBottomToTip, TLowerSquare);
 
 			float3 NLower = Slerp(float4(KGroundNormal, 0), KUp, TLower).xyz;
 			float3 NHigher = Slerp(float4(KGroundNormal, 0), KUp, THigher).xyz;
